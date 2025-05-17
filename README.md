@@ -20,9 +20,8 @@ require": {
 sementara video pembelajarannya di buat dengan versi 9
 
 ## Buat project baru
-composer create-project --prefer-dist laravel/laravel:9 laravel-8-project
-
-composer create-project laravel/laravel laravel-10-project "10.*"
+- composer create-project --prefer-dist laravel/laravel:9 laravel-8-project
+- composer create-project laravel/laravel laravel-10-project "10.*"
 
 ## Laravel Version	Supported PHP Versions 8.2 
 9*	= (8.0 - 8.2)	February 8th, 2022
