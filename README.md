@@ -24,11 +24,12 @@ sementara video pembelajarannya di buat dengan versi 9
 - composer create-project laravel/laravel laravel-10-project "10.*"
 
 ## Laravel Version	Supported PHP Versions 8.2 
+>
 9*	= (8.0 - 8.2)	February 8th, 2022
 10	= (8.1 - 8.3)	February 14th, 2023
 11	= (8.2 - 8.3)	March 12th, 2024
 12	= (8.2 - 8.3)	Q1 2025
-
+>
 ## Catatan belajar
 - saya punya catatan laravel dan catatan postman
 
