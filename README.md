@@ -25,8 +25,8 @@ sementara video pembelajarannya di buat dengan versi 9
 
 ## Laravel Version	Supported PHP Versions 8.2 
 
-Judul 1 | Judul 2
-------- | -------
+Judul 1 | Judul 2 | Judul 3
+------- | ------- | -------
 Isi baris 1 | Isi baris 1 lagi
 Isi kolom 1 | Isi kolom 2
 
