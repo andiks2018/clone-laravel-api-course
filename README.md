@@ -33,7 +33,7 @@ Larave | PHP | Publish
 12 | (8.2 - 8.3) | Q1 2025
 
 ## Catatan belajar
-- saya punya catatan laravel dan catatan postman
+- saya punya catatan laravel dan catatan postman di projek terakhir
 
 ## Github command
 - git branch
