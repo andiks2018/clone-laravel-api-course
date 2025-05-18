@@ -1,0 +1,345 @@
+QUOTE API
+--------------------------
+
+MENGAMBIL DATA FAKE DAN MENAMPILKAN MENGGUNAKAN GET
+===================================================
+
+Setelah menginstall laravel dan berhasil menjalankan php artisan serve, selanjutnya kita akan menginstall apa yang dibutuhkan selama belajar rest api :
+
+1. install API
+php artisan install:api,
+kemudian coba cek env apakah sudah terhubung ke database nya
+ganti database name sesuai yang sesuai di env
+
+2 install controller dan model
+artisan make controller > QuoteController > api > yes > Quote
+
+tambahaan di api.php
+Route::apiResource('/quote', QuoteController::class);
+
+3 Model migration Factory dan Seeder
+
+Quote.php
+tambahkan protected
+make migration create_quote_table >yes > quotes >
+di file itu tambahkan text dan author
+
+selanjutnya buat factory
+make factory > QuoteFactory > yes > Quote
+tambahkan  'text' => $this->faker->text(),
+
+selanjutnya
+make seeder > QuoteSeeder
+tambahkan Quote::factory()
+            ->count(10)
+            ->create();
+
+selanjtunya cari DatabaseSeeder.php
+tambahkan $this->call([
+            QuoteSeeder::class,
+        ]);
+
+Terakhir kita mirgate refresh --seed
+
+4 mengambil satu data api hanya menampilkan id dan text dan author
+make quote resource > QuoteResource > no
+tambahkan
+    'id' => $this->id,
+    'text' => $this->text,
+    'author' =>strtoupper($this->author),
+
+selanjutnya di controller tambhakn di show
+return new QuoteResource($quote);
+
+5 pagination dan list api
+kalau kita perhatikan route:list untuk menampilkan semua data
+    api/quote .......... quote.index › QuoteController@index
+
+selanjutnya tambahkan di controller untuk menampilkan semua list data
+    public function index()
+    {
+        return QuoteResource::collection(Quote::all());
+    }
+
+bagaimana kalau menampilkan per page contoh per 5
+    {
+        return QuoteResource::collection(Quote::paginate(5));
+    }
+
+6 bagaimana kalau kita tidak mau pakai data {} tampilan dari json itu kan ada data {}
+Tambahkan di appserviceprovider
+public function boot(): void
+    {
+        //menghilangkan data wrapping
+        QuoteResource::withoutWrapping();
+
+        // bagaimana kalau kita ingin menghilangkan data wrapping di semua resource
+        JsonResource::withoutWrapping();
+    }
+
+Namun fitur ini saat ini kita matikana
+
+==================================================
+
+MEMBUAT DATA
+
+1 kita buat meke request >StoreQuoteRequest >
+di file ini tambahkan true
+ public function authorize(): bool
+    {
+        return true;
+    }
+
+public function rules(): array
+    {
+           //validasi data yang masuk
+         return [
+            'text' => 'required|min:20',
+            'author' => 'required|min:10,',
+        ];
+    }
+
+di controller function store
+    public function store(StoreQuoteRequest $request)
+    {
+        //
+        return response()->json('hello');
+    }
+
+mungkin catatan disini untuk membuat data kita butuh validasi setelah ok
+
+ganti respon di controller menjadi di bawah ini
+public function store(StoreQuoteRequest $request)
+    {
+        //
+        //return response()->json('hello');
+        return new QuoteResource(Quote::create($request->validated()));
+    }
+
+===========================================
+UPDATE DATA LIMO 14 Mei 2025
+
+1. tambahkan di controller
+Route::apiResource('/quote', QuoteController::class);
+
+2. make request > UpdateQuoteRequest
+
+rubah ke true
+public function authorize(): bool
+    {
+        return true;
+    }
+
+validasinya
+return [
+            //
+            'text' => 'required|min:20',
+            'author' => 'required|min:10,',
+        ];
+
+3 di controller update
+tambahkan
+return new QuoteResource(tap($quote) ->update($request->validated()));
+
+4 Bagaimana kalau kita pasang validasi untuk quote tidak boleh sama
+
+tambahkan ini di update
+// 'text' => 'required|min:20|' . Rule::unique('quotes')->ignore($this->quote),
+
+di store
+//'text' => 'required|min:20|unique:quotes',
+
+=========================================
+
+DELETE DATA
+
+1 controller
+ public function destroy(Quote $quote)
+    {
+        //
+        $quote->delete();
+        return response()->noContent();
+    }
+
+====================================
+AUTH SANCTUM (AGAR TIDAK SEMUA ORANG BISA MASUK KE API KITA)
+
+1. awalnya di luar sekarang kita masukkan kedalam auth middleware
+Route::middleware('auth:sanctum')->group(function () {
+    Route::apiResource('/quote', QuoteController::class);
+});
+
+dan ketika dijalankan sekarang maka akan muncul kode Unauthencticated
+
+2. make controller > Api/ApiAuthController > basic
+
+controlle auth awal
+class ApiAuthController extends Controller
+{
+    public function login (Request $request)
+    {
+        // validate request
+        // check if user is exist
+        // check if password is correct
+        // generate token
+        // return response
+    }
+
+    public function register (Request $request)
+    {
+        // code ..
+    }
+
+    public function logout (Request $request)
+    {
+        // code ..
+    }
+
+}
+
+3. buat login route dan register route dan logout, biar api otomatis install make controller dulu
+
+Routenya jadi begini
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::apiResource('/quote', QuoteController::class);
+    Route::post('/logout', [ApiAuthController::class, 'logout']);
+});
+
+// buat register dan login
+Route::post('/register', [ApiAuthController::class, 'register']);
+Route::post('/login', [ApiAuthController::class, 'login']);
+
+4. kita buat logika di controller auth
+public function login (Request $request)
+    {
+        // validate request
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required'
+        ]);
+        // check if user is exist
+        $user = User::where('email', $request->email)->first();
+        // check if password is correct
+        if (!$user || !Hash::check($request->password, $user->password)) {
+            return response()->json([
+                'message' => 'coba cek email dan password anda'
+            ], 401);
+        }
+        // generate token
+        $token = $user->createToken('token')->plainTextToken;
+        // return $user->createToken('token')->plainTextToken;
+        // return response ini alternatif dengan
+        return response()->json([
+            'message' => 'Login success',
+            'token' => $token,
+            'user' => $user,
+        ]);
+
+5 yang salah sudah berhasil di benarkan dengan
+Menembahkan app/Models/User.php HasApiTokens (tidak punya token karena belum menambahkan Hash)
+dan melakukan php artisan migrate (kenapa dia minta tabel token karena belum migrate)
+
+=============
+REFACTOR FUNCTION LOGIN
+1. make request > LoginRequest
+- ubah authorize menjadi true
+- di function rules tambahkan
+    'email' => 'required|email',
+    'password' => 'required'
+
+2.function login yang terhubung ke LoginRequest
+kita rubah
+       if (Auth::attempt($request->only('email', 'password'))) {
+            // jika berhasil login, kita ambil usernya
+            $user = User::where('email', $request->email)->first();
+            $token = $user->createToken('token')->plainTextToken;
+            return response()->json([
+                'message' => 'Login success',
+                'token' => $token,
+                'user' => $user,
+            ]);
+        } else {
+            // jika gagal login
+            return response()->json([
+                'message' => 'coba cek email dan password anda'
+            ], 401);
+        }
+
+================
+CREATE LOGOUT
+1. di function logut tambahkan code tujuannya agar token yang sudah di database dihapus saja
+    $request->user()->tokens()->delete();
+        return response()->json([
+            'message' => 'Logout success'
+        ]);
+
+2. tambahan sedikit function login juga kita akan hapus token yang sudah masuk
+    $user->tokens()->delete();
+
+=================
+REGISTER
+1. function register awal
+
+    public function register (Request $request)
+    {
+        // validate input user
+        $request->validate([
+            'name' => 'required|string',
+            'email' => 'required|email|unique:users,email|confirmed',
+            'password' => 'required|min:6',
+        ]);
+        // save user ke database
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+        ]);
+        // return token
+        $token = $user->createToken('token')->plainTextToken;
+        return response()->json([
+            'message' => 'Register success',
+            'token' => $token,
+            'user' => $user,
+        ]);
+    }
+
+2. make request >RegisterRequest >
+    seperti biasa ubah ke true
+    dan function rule nya tambahkan validate sepeti di bawah ini
+    return [
+            'name' => 'required|string',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|min:6|confirmed',
+        ];
+3. function register setelah diubah
+
+        public function register (RegisterRequest $request)
+    {
+        // validate input user -> ini ke RegisterRequest
+
+        // save user ke database
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+        ]);
+        // return token
+        $token = $user->createToken('token')->plainTextToken;
+        return response()->json([
+            'message' => 'Register success',
+            'token' => $token,
+            'user' => $user,
+        ]);
+    }
+
+4. Perhatika route yang benar
+
+    Route::middleware('auth:sanctum')->group(function () {
+    Route::apiResource('/quote', QuoteController::class);
+    Route::post('/logout', [ApiAuthController::class, 'logout']);
+});
+
+// buat register dan login
+Route::post('/register', [ApiAuthController::class, 'register']);
+Route::post('/login', [ApiAuthController::class, 'login']);

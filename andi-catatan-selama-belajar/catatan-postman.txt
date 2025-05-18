@@ -1,0 +1,99 @@
+Setelah berhasil menginstall postman selanjutnya :
+
+1. di environtmen buat buat 2 variable :
+    a. Local
+    b. Staging
+
+2. Folder local :
+    a. variable : baseUrl dst. initial value jadi begini http://127.0.0.1:8000/
+
+3. test file dengan mengganti url seperti itu {{baseUrl}}api/quote/1
+
+4 untuk menampilkan semua quote
+Key : Accept dan value : application.json
+
+{{baseUrl}}api/quote/ > tekan send
+hasilnya akan menampilkan keseluruhan quote yang ada di db
+
+5 selanjutnya bagaimana kalau saya hanya ingin menambahkan hanya 5 data perhalaman
+bagaimana membuktikan kalau benar sudah per lima
+{{baseUrl}}api/quote?page=2
+
+lihat hasilnya apakah halaman 2 sudah dimulai dari data ke 6
+berhasil
+
+6 bagaimana menampilkan quote ke 10
+{{baseUrl}}api/quote/10
+
+=======================================================
+SEKARANG BAGAIMANA MELAKUKAN CREATE DATA VERB HTTP POST
+
+1. buat folder baru bernama quote
+ada yang beda disini untuk create post kita menuju ke body
+key : text dan author
+value : isi sembarangnya
+di bagian atas 2 tabel ini ganti ke www.form-urlencoded
+coba lihat hasil akhirnya tampil hello gak?
+
+kemudian
+{{baseUrl}}api/quote/
+methodnya POST
+
+============================================
+UPDATE DATA LIMO 14 Mei 2025
+1. sudah berhasil update data menggunakan method PUT
+
+2. cara menggunakan post man panggil dulu datanya kemudian di edit
+biar kelihatan methodnya tekan save
+
+3. perhatikan body dan headernya beda setiap method
+
+=========================================
+
+DELETE DATA
+1. kalau mau hapus get data dulu, lihat data yang akan dihapus maunya yang mana
+
+2. kemdudian pilih id mana contoh {{baseUrl}}api/quote/13
+
+3. method yang digunakan DELETE
+
+4. di body kosongkan saja text dan authornya
+
+====================================
+AUTH SANCTUM (AGAR TIDAK SEMUA ORANG BISA MASUK KE API KITA)
+1. Header Key : Accept, value : application/json
+2. Body, Key : email  dan password pilih x www-form-urlencoded
+3. Method POST, baseUrl api/login
+
+==========
+LOGOUT
+1. URL yang digunakan {{baseUrl}}api/logout method yang digunakan juga maasih sama POST
+2. Sebelumnya kita harus login dulu baru bisa masuk ke logut biar dapat token
+3. pilih auth > Bearer > masukkan token yang sudah didapat send
+
+================
+REGISTER
+1. perhatikan route api ini untuk mengetahui siapa saja yang bisa mengakses code tanpa token
+
+    akses quote dan logout harus pakai token
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::apiResource('/quote', QuoteController::class);
+        Route::post('/logout', [ApiAuthController::class, 'logout']);
+    });
+
+    kalau register dan login tidak memakai token
+    // buat register dan login
+    Route::post('/register', [ApiAuthController::class, 'register']);
+    Route::post('/login', [ApiAuthController::class, 'login']);
+
+    create read update dan delete quote harus pakai token bearer
+
+2. sehingga ada penyesuaian setting di postman untuk yang membutuhkan token
+
+=============
+postman biar autosave login nya
+// console.log(responseBody);
+var loginResponse = JSON.parse(responseBody);
+pm.environment.set('token', loginResponse.token);
+
+
